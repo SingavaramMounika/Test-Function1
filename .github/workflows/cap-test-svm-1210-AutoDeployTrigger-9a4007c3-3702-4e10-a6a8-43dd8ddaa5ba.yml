@@ -1,0 +1,49 @@
+name: Trigger auto deployment for cap-test-svm-1210
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ newbranchfortest ]
+    paths:
+    - '**'
+    - '.github/workflows/cap-test-svm-1210-AutoDeployTrigger-9a4007c3-3702-4e10-a6a8-43dd8ddaa5ba.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.CAPTESTSVM1210_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.CAPTESTSVM1210_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.CAPTESTSVM1210_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          _targetLabelKey_: _targetLabel_
+          registryUrl: registrymounika3009.azurecr.io
+          registryUsername: ${{ secrets.CAPTESTSVM1210_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.CAPTESTSVM1210_REGISTRY_PASSWORD }}
+          containerAppName: cap-test-svm-1210
+          resourceGroup: ogftestmounika1210-svm
+          imageToBuild: registrymounika3009.azurecr.io/cap-test-svm-1210:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
