@@ -25,7 +25,9 @@ jobs:
           distribution: 'microsoft'
 
       - name: Build with Maven
-        run: mvn clean install
+  env:
+    JDK_JAVA_OPTIONS: "--add-opens=java.base/java.util=ALL-UNNAMED"
+  run: mvn clean install
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
