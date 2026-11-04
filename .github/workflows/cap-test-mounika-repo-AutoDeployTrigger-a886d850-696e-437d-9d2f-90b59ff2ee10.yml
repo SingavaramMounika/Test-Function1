@@ -1,0 +1,49 @@
+name: Trigger auto deployment for cap-test-mounika-repo
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ master ]
+    paths:
+    - '**'
+    - '.github/workflows/cap-test-mounika-repo-AutoDeployTrigger-a886d850-696e-437d-9d2f-90b59ff2ee10.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.CAPTESTMOUNIKAREPO_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.CAPTESTMOUNIKAREPO_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.CAPTESTMOUNIKAREPO_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          _targetLabelKey_: _targetLabel_
+          registryUrl: 
+          registryUsername: ${{ secrets.CAPTESTMOUNIKAREPO_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.CAPTESTMOUNIKAREPO_REGISTRY_PASSWORD }}
+          containerAppName: cap-test-mounika-repo
+          resourceGroup: ogf-container-mounika-0510
+          imageToBuild: default/[parameters('containerAppName')]:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
